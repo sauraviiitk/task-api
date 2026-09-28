@@ -73,11 +73,11 @@ describe('Tasks API Integration Tests', () => {
         taskService.create({ title: `T${i}` });
       }
 
-      // Asserting the current buggy behavior where page 1 starts at offset 2
+      // After bug fix: page 1, limit 2 should return items 0 and 1
       const response = await request(app).get('/tasks?page=1&limit=2');
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(2);
-      expect(response.body[0].title).toBe('T2');
+      expect(response.body[0].title).toBe('T0');
     });
   });
 
@@ -139,6 +139,35 @@ describe('Tasks API Integration Tests', () => {
 
     it('should return 404 for completing non-existent task', async () => {
       const response = await request(app).patch('/tasks/invalid-id/complete');
+      expect(response.status).toBe(404);
+    });
+  });
+
+  describe('PATCH /tasks/:id/assign', () => {
+    it('should assign a task to a user', async () => {
+      const task = taskService.create({ title: 'Task' });
+
+      const response = await request(app)
+        .patch(`/tasks/${task.id}/assign`)
+        .send({ assignee: 'Alice' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.assignee).toBe('Alice');
+    });
+
+    it('should return 400 for missing or invalid assignee', async () => {
+      const task = taskService.create({ title: 'Task' });
+      
+      const response1 = await request(app).patch(`/tasks/${task.id}/assign`).send({});
+      expect(response1.status).toBe(400);
+      expect(response1.body.error).toContain('assignee must be a non-empty string');
+
+      const response2 = await request(app).patch(`/tasks/${task.id}/assign`).send({ assignee: '   ' });
+      expect(response2.status).toBe(400);
+    });
+
+    it('should return 404 for assigning a non-existent task', async () => {
+      const response = await request(app).patch('/tasks/invalid-id/assign').send({ assignee: 'Bob' });
       expect(response.status).toBe(404);
     });
   });

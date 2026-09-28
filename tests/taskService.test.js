@@ -71,20 +71,22 @@ describe('Task Service Unit Tests', () => {
   });
 
   describe('getPaginated', () => {
-    it('should paginate tasks (with current offset logic)', () => {
+    it('should paginate tasks correctly', () => {
       for (let i = 0; i < 5; i++) {
         taskService.create({ title: `Task ${i}` });
       }
-      // Note: Current logic is offset = page * limit.
-      // So page = 0, limit = 2 should return items 0, 1
-      const page0 = taskService.getPaginated(0, 2);
-      expect(page0).toHaveLength(2);
-      expect(page0[0].title).toBe('Task 0');
-
-      // page = 1, limit = 2 should return items 2, 3
+      
+      // With fixed offset logic: page 1, limit 2 should return items 0, 1
       const page1 = taskService.getPaginated(1, 2);
       expect(page1).toHaveLength(2);
-      expect(page1[0].title).toBe('Task 2');
+      expect(page1[0].title).toBe('Task 0');
+      expect(page1[1].title).toBe('Task 1');
+
+      // page 2, limit 2 should return items 2, 3
+      const page2 = taskService.getPaginated(2, 2);
+      expect(page2).toHaveLength(2);
+      expect(page2[0].title).toBe('Task 2');
+      expect(page2[1].title).toBe('Task 3');
     });
   });
 
